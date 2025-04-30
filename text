@@ -1,0 +1,896 @@
+
+
+
+// const getHourlyRecordsLast3Months = async (req, res) => {
+//     try {
+//         const numberOfDays = 60; // Approximately 2 months (you can adjust)
+//         const allRecords = [];
+
+//         const now = new Date();
+
+//         for (let i = 0; i < numberOfDays; i++) {
+//             const toDate = new Date(now);
+//             toDate.setDate(now.getDate() - i);
+//             toDate.setHours(6, 59, 59, 999); // End of the 24-hour period
+
+//             const fromDate = new Date(toDate);
+//             fromDate.setDate(toDate.getDate() - 1);
+//             fromDate.setHours(7, 0, 0, 0); // Start of the 24-hour period
+
+//             const query = `
+//                 SELECT H.DateTime, H.TagName, H.Value, T.Description
+//                 FROM History H
+//                 INNER JOIN _Tag T ON H.TagName = T.TagName
+//                 WHERE H.TagName IN (
+//                     'Marampa_1C.A1241FIC043_PV',
+//                      'Marampa_1C.A1241DIC043_PV',
+//                      'Marampa_1C.A1241PIT042_PV',
+//                      'Marampa_1B.A2251WQIT5114_TOT_HourLast',
+//                      'Marampa_1C.A1226WIT004_TOT_HourLast'
+//                 )
+//                 AND wwCycleCount = 100
+//                 AND wwRetrievalMode = 'cyclic'
+//                 AND H.DateTime BETWEEN @fromDate AND @toDate
+//                 ORDER BY H.DateTime
+//             `;
+
+//             const params = {
+//                 fromDate: fromDate.toISOString().slice(0, 19).replace("T", " "),
+//                 toDate: toDate.toISOString().slice(0, 19).replace("T", " ")
+//             };
+
+//             const records = await executeQuery(query, params);
+//             allRecords.push(...records);
+//         }
+
+//         res.status(200).json(allRecords);
+
+//     } catch (error) {
+//         console.error("Error fetching hourly records:", error);
+//         res.status(500).json({ message: "Error fetching hourly records", error });
+//     }
+// };
+
+
+
+{timeSpannedData.length > 0 && timeSlots.length > 0 ? (
+  <div className="min-w-full overflow-x-auto relative">
+    <div className="max-h-[75vh] overflow-y-auto">
+      <table className="table-auto border-collapse min-w-full">
+        <thead className="bg-gray-100 border-b-[1px] border-zinc-300 sticky top-0 z-10 table-header-group">
+          <tr>
+            {columns.map((column) => (
+              <th
+                key={column.key}
+                className={`px-[1rem] py-[12px] text-left text-[0.9rem] font-semibold text-gray-700 min-w-[15rem] sticky top-0 z-10 bg-gray-100 cursor-pointer ${sortColumn === column.key ? 'font-bold' : ''}`}
+                onClick={() => handleSort(column.key)}
+              >
+                <div className="flex items-center">
+                  {column.label}
+                  {sortColumn === column.key && (
+                    <span className="ml-2">
+                      {sortOrder === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
+                </div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody ref={tableBodyRef} className="table-row-group">
+          {timeSpannedData.map((item, rowIndex) => (
+            <tr key={rowIndex} className={`${rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-b`}>
+              {columns.map((column) => (
+                <td key={`${rowIndex}-${column.key}`} className="px-[1rem] py-[1rem] text-sm text-gray-700 whitespace-nowrap">
+                  {item[column.key] !== undefined ? item[column.key] : '-'}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+) : (
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Function to get production records with a date filter
+const getProductionRecords = async (req, res) => {
+  try {
+    const { fromDate, toDate } = req.query;
+
+    if (!fromDate || !toDate) {
+      return res.status(400).json({ message: "Please provide fromDate and toDate" });
+    }
+
+    // Construct the SQL query
+    let query = `
+      SELECT 
+          H.DateTime AS DateTime,
+          H.TagName, 
+          AVG(H.Value) AS AvgValue,
+          T.Description
+      FROM History H
+      INNER JOIN _Tag T ON H.TagName = T.TagName
+      WHERE H.TagName IN (
+          'Marampa_1C.A3221PU302_SPEEDSP', 
+          'Marampa_1C.A3221MF113_PV', 
+          'Marampa_1C.A3221FIC110_PV', 
+          'Marampa_1C.A3221LIC004_PV', 
+          'Marampa_1C.A3221PU302_LOAD', 
+          'Marampa_1C.A3221PIT104_PV', 
+          'Marampa_1C.A3221PU302_SPEED', 
+          'Marampa_1C.A3221PU302_TC', 
+          'Marampa_1C.A3221PU302_TORQ'
+      ) 
+      AND H.DateTime BETWEEN @fromDate AND @toDate
+      AND wwCycleCount = 100 
+      AND wwRetrievalMode = 'cyclic'
+      GROUP BY 
+          H.DateTime,                    -- Group by the full DateTime
+          H.TagName, 
+          T.Description
+      ORDER BY H.DateTime;               -- Sort by DateTime
+    `;
+
+    // Prepare parameters for the query
+    const params = {
+      fromDate: `${fromDate} 00:00:00`,  // Ensure the start time is at the beginning of the day
+      toDate: `${toDate} 23:59:59`       // Ensure the end time is the last moment of the day
+    };
+
+    // Log the query and parameters for debugging
+    console.log("Executing Query:", query);
+    console.log("Query Parameters:", params);
+
+    // Execute the query
+    const records = await executeQuery(query, params);
+
+    // Return the results as JSON response
+    res.status(200).json(records);
+
+  } catch (error) {
+    console.error("Error fetching production records:", error);
+    res.status(500).json({
+      message: "Error fetching production records",
+      error
+    });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div className="min-w-full grid grid-cols-4 gap-x-4 capitalize font-medium text-[1rem] px-1 mt-12 border-b-[1px] border-zinc-400 pb-[10px] overflow-x-scroll md:gap-x-6 md:text-base">
+      {['Tags', 'Description', 'Production Date', 'Time'].map((title, index) => (
+        <div key={index} className="min-w-full">
+          <h2 className="text-lg font-bold mt-4">
+            {title}
+          </h2>
+          {index === 3 && (
+            <div className="min-w-full text-[12px] border-t-[1px] border-zinc-400 flex justify-between overflow-x-scroll">
+              {[...new Array(24)].map((_, i) => (
+                <div key={i} className="px-[1rem] border-r-[1px] border-zinc-400">
+                  {format(new Date(0, 0, 0, i), "HH:00")}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+      </div>
+
+
+"use client";
+import React, { useState } from "react";
+import { format } from "date-fns";
+import { data } from "@/data";
+import { DateRangePicker } from "../../_components/DateRangePicker";
+
+// Function to calculate the time range for the selected date
+const calculateDateRange = (selectedDate) => {
+  if (!selectedDate) return { start: null, end: null };
+
+  const selected = new Date(selectedDate);
+
+  // Get yesterday's date and set it to 6 AM
+  const startOfRange = new Date(selected);
+  startOfRange.setDate(selected.getDate() - 1); // Go to the previous day
+  startOfRange.setHours(6, 0, 0, 0); // Set to 6 AM
+
+  // Set the selected date to 7 AM
+  const endOfRange = new Date(selected);
+  endOfRange.setHours(7, 0, 0, 0); // Set to 7 AM on the selected day
+
+  return {
+    start: startOfRange,
+    end: endOfRange,
+  };
+};
+
+// Data transformation function to convert tagNames to columns
+const transformData = (originalData) => {
+  const groupedData = {};
+
+  originalData.forEach((item) => {
+    const key = `${item.date_time}`;
+
+    if (!groupedData[key]) {
+      groupedData[key] = {
+        id: item.id,
+        date_time: item.date_time,
+        production_date: item.date_time,
+      };
+    }
+
+    groupedData[key][item.tagNames] = item.value;
+  });
+
+  return Object.values(groupedData);
+};
+
+// Get all unique tagNames for column headers
+const getUniqueTagNames = (originalData) => {
+  const tagNames = new Set();
+  originalData.forEach((item) => {
+    tagNames.add(item.tagNames);
+  });
+  return Array.from(tagNames);
+};
+
+export default function Dashboard() {
+  const uniqueTagNames = getUniqueTagNames(data);
+  const transformedData = transformData(data);
+
+  const [selectedProductionDate, setSelectedProductionDate] = useState(null);
+  const [dateRangeProductionDate, setDateRangeProductionDate] = useState(null);
+  const [sortConfig, setSortConfig] = useState({
+    key: "date_time",
+    direction: "ascending",
+  });
+
+  // Handler for the date input
+  const handleProductionDateSelect = (date) => {
+    setSelectedProductionDate(date);
+    setDateRangeProductionDate(null); // Clear the DateRangePicker selection
+  };
+
+  // Handler for the DateRangePicker
+  const handleDateRangeSelect = (from, to) => {
+    if (from) {
+      // If a date is selected in the DateRangePicker, use it as a production date
+      setDateRangeProductionDate(format(from, "yyyy-MM-dd"));
+      setSelectedProductionDate(null); // Clear the date input selection
+    } else {
+      setDateRangeProductionDate(null);
+    }
+  };
+
+  const handleSort = (key) => {
+    let direction = "ascending";
+    if (sortConfig.key === key && sortConfig.direction === "ascending") {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Get the effective production date (either from input or DateRangePicker)
+  const effectiveProductionDate = selectedProductionDate || dateRangeProductionDate;
+
+  // Calculate the date range based on the effective production date
+  const productionDateRange = calculateDateRange(effectiveProductionDate);
+
+  // Filter the transformed data based on the production date range
+  const filteredData = transformedData.filter((item) => {
+    if (!productionDateRange.start || !productionDateRange.end) return true;
+
+    const itemDate = new Date(item.date_time);
+    return (
+      itemDate >= productionDateRange.start && itemDate <= productionDateRange.end
+    );
+  });
+
+  // Sort the filtered data
+  const sortedData = [...filteredData].sort((a, b) => {
+    if (sortConfig.key === "date_time") {
+      const dateA = new Date(a.date_time);
+      const dateB = new Date(b.date_time);
+      return sortConfig.direction === "ascending" ? dateA - dateB : dateB - dateA;
+    }
+
+    if (typeof a[sortConfig.key] === "string") {
+      return sortConfig.direction === "ascending"
+        ? a[sortConfig.key].localeCompare(b[sortConfig.key])
+        : b[sortConfig.key].localeCompare(a[sortConfig.key]);
+    }
+
+    const valueA = a[sortConfig.key] !== undefined ? a[sortConfig.key] : -Infinity;
+    const valueB = b[sortConfig.key] !== undefined ? b[sortConfig.key] : -Infinity;
+
+    return sortConfig.direction === "ascending" ? valueA - valueB : valueB - valueA;
+  });
+
+  // Create column definitions
+  const baseColumns = [
+    { key: "date_time", label: "Date Time" },
+    { key: "production_date", label: "Production Date" },
+  ];
+
+  const tagColumns = uniqueTagNames.map((tagName) => ({
+    key: tagName,
+    label: tagName,
+  }));
+
+  const columns = [...baseColumns, ...tagColumns];
+
+  return (
+    <div className="container mx-auto px-4 pt-4">
+      <div className="w-full mb-[1rem] flex justify-between border-b-[1px] pb-[10px]">
+        <h1 className="text-2xl font-bold">Hourly Report</h1>
+        <div>
+          <label>Select Production Date:</label>
+          <input
+            type="date"
+            value={selectedProductionDate || ""}
+            onChange={(e) => handleProductionDateSelect(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {effectiveProductionDate && productionDateRange.start && productionDateRange.end && (
+        <div className="mt-2">
+          <p>Showing data from {format(productionDateRange.start, "MM/dd/yy HH:mm")} to {format(productionDateRange.end, "MM/dd/yy HH:mm")}</p>
+        </div>
+      )}
+
+      {sortedData.length > 0 ? (
+        <div className="overflow-x-auto">
+          <div
+            className="min-w-full grid gap-x-4 capitalize font-medium text-sm px-1 mt-12 overflow-x-scroll md:gap-x-6 md:text-base"
+            style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(150px, 1fr))` }}
+          >
+            {columns.map((column, index) => (
+              <div
+                className="w-fit relative py-1 border-b border-zinc-500 cursor-pointer whitespace-nowrap bg-red-50 px-[30px]"
+                key={index}
+                onClick={() => handleSort(column.key)}
+              >
+                <h2 className="flex items-center justify-between">
+                  {column.label}
+                  {sortConfig.key === column.key && (
+                    <span className="ml-1">{sortConfig.direction === "ascending" ? "↑" : "↓"}</span>
+                  )}
+                </h2>
+              </div>
+            ))}
+          </div>
+
+          <div className="min-w-full hourly_data mt-2 pb-[15px] h-[30rem] overflow-scroll">
+            {sortedData.map((item, rowIndex) => (
+              <div
+                className="grid gap-x-4 capitalize font-medium text-sm px-1 mt-4 md:gap-x-6 md:text-base"
+                style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(150px, 1fr))` }}
+                key={rowIndex}
+              >
+                {columns.map((column, colIndex) => (
+                  <p key={`${rowIndex}-${colIndex}`} className="whitespace-nowrap overflow-hidden text-ellipsis">
+                    {column.key === "date_time" ? (
+                      format(new Date(item.date_time), "MM/dd/yy HH:mm")
+                    ) : column.key === "production_date" ? (
+                      format(new Date(item.date_time), "MM/dd/yy")
+                    ) : (
+                      item[column.key] !== undefined ? item[column.key] : "-"
+                    )}
+                  </p>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div>No data available for the selected date range.</div>
+      )}
+    </div>
+  );
+}
+
+
+
+
+
+
+// Get record by ID
+const getRecordById = async (req, res) => {
+  try {
+    const recordId = req.params.id;
+    const query = "SELECT * FROM records WHERE id = @recordId";
+    const records = await executeQuery(query, [recordId], ["recordId"]);
+
+    if (records.length === 0) {
+      return res.status(404).json({ message: "Record not found" });
+    }
+
+    res.status(200).json(records[0]);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching record", error });
+  }
+};
+
+// Add a new record
+const addRecord = async (req, res) => {
+  try {
+    const { name, value } = req.body;
+    const query = "INSERT INTO records (name, value) VALUES (@name, @value)";
+    await executeQuery(query, [name, value], ["name", "value"]);
+
+    res.status(201).json({ message: "Record added successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error adding record", error });
+  }
+};
+
+// Update a record
+const updateRecord = async (req, res) => {
+  try {
+    const recordId = req.params.id;
+    const { name, value } = req.body;
+    const query = "UPDATE records SET name = @name, value = @value WHERE id = @recordId";
+    await executeQuery(query, [name, value, recordId], ["name", "value", "recordId"]);
+
+    res.status(200).json({ message: "Record updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating record", error });
+  }
+};
+
+// Delete a record
+const deleteRecord = async (req, res) => {
+  try {
+    const recordId = req.params.id;
+    const query = "DELETE FROM records WHERE id = @recordId";
+    await executeQuery(query, [recordId], ["recordId"]);
+
+    res.status(200).json({ message: "Record deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting record", error });
+  }
+};
+
+module.exports = {
+  getRecordById,
+  addRecord,
+  updateRecord,
+  deleteRecord,
+};
+
+
+
+
+
+// Get data and state from store
+    const { setDateRange, dateRange } = useDataStore();
+
+    // Use TanStack Query hook
+    const { data, isLoading, error, refetch } = useData();
+
+    // Function to handle date changes from DateRangePicker
+    const handleDateChange = (from, to) => {
+        setDateRange({ 
+            from: from ? startOfDay(from) : null, 
+            to: to ? endOfDay(to) : null 
+        });
+    };
+    
+    // Refetch when date range changes
+    useEffect(() => {
+        refetch();
+    }, [dateRange, refetch]);
+
+
+
+
+"use client"
+
+import React, { useEffect } from 'react'
+import { DateRangePicker } from '../../_components/DateRangePicker'
+import { useData } from '@/hooks/useData';
+import useDataStore from '@/store/useDataStore';
+import { startOfDay, endOfDay } from 'date-fns';
+import { Loader2 } from 'lucide-react';
+
+const Dashboard = () => {
+  // Get data and state from store
+  const { setDateRange, dateRange } = useDataStore();
+  
+  // Use TanStack Query hook
+  const { data, isLoading, error, refetch } = useData();
+  
+  // Function to handle date changes from DateRangePicker
+  const handleDateChange = (from, to) => {
+    setDateRange(
+      from ? startOfDay(from) : null,
+      to ? endOfDay(to) : null
+    );
+  };
+  
+  // Refetch when date range changes
+  useEffect(() => {
+    refetch();
+  }, [dateRange, refetch]);
+  
+  return (
+    <div className='mt-8'>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <h2 className='text-2xl font-semibold'>
+          Hourly Report
+        </h2>
+        <DateRangePicker onDateChange={handleDateChange} />
+      </div>
+      
+      {isLoading ? (
+        <div className="flex items-center justify-center mt-20">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+        </div>
+      ) : error ? (
+        <div className="p-4 mt-4 bg-red-50 text-red-700 rounded-md">
+          Error loading data: {error}
+        </div>
+      ) : data?.length > 0 ? (
+        <>
+          <div className="grid grid-cols-2 gap-x-4 capitalize font-medium text-sm px-1 mt-12 md:grid-cols-5 md:gap-x-6 md:text-base">
+            {['date', 'value'].map((head, index) => (
+              <div
+                role='button'
+                className="relative py-1 border-b border-zinc-500" 
+                key={index}
+              >
+                <h2 className='flex items-center justify-between'>
+                  {head}
+                </h2>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-4">
+            {data.map((item) => (
+              <div
+                className="grid grid-cols-2 gap-x-4 capitalize font-medium text-sm px-1 mt-4 md:grid-cols-5 md:gap-x-6 md:text-base"
+                key={item.id}
+              >
+                <p>{item.date}</p>
+                <p>{item.value}</p>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <p className="mt-12 text-gray-500 text-center">
+          No data found for selected dates.
+        </p>
+      )}
+    </div>
+  )
+}
+
+export default Dashboard
+
+
+
+
+
+
+"use client"
+
+import React, { useEffect, useState } from 'react'
+import { DateRangePicker } from '../../_components/DateRangePicker'
+import { data } from '@/data';
+import { isWithinInterval, parseISO, startOfDay, endOfDay, isSameDay } from "date-fns";
+import { useData } from '@/hooks/useData';
+import useDataStore from '@/store/dataStore';
+import { Loader2 } from 'lucide-react';
+
+const Dashboard = () => {
+    // Get data and state from store
+    const { setDateRange, dateRange } = useDataStore();
+
+    // Use TanStack Query hook
+    const { data, isLoading, error, refetch } = useData();
+
+    // Function to handle date changes from DateRangePicker
+    const handleDateChange = (from, to) => {
+        setDateRange(
+            from ? startOfDay(from) : null, 
+            to ? endOfDay(to) : null 
+        );
+    };
+    
+    // Refetch when date range changes
+    useEffect(() => {
+        refetch();
+    }, [dateRange, refetch]);
+    
+    return (
+        <div className='mt-8'>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <h2 className='text-2xl font-semibold'>
+                    Hourly Report
+                </h2>
+                <DateRangePicker onDateChange={handleDateChange} />
+            </div>
+            {isLoading ? (
+                <div className="flex items-center justify-center mt-20">
+                    <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+                </div>
+            ) : error ? (
+                <div className="p-4 mt-4 bg-red-50 text-red-700 rounded-md">
+                    Error loading data: {error}
+                </div>
+            ) : data?.length > 0 ? (
+                <>
+                    <div className="grid grid-cols-2 gap-x-4 capitalize font-medium text-sm px-1 mt-12 md:grid-cols-5 md:gap-x-6 md:text-base">
+                        {['date', 'value'].map((head, index) => (
+                        <div
+                            role='button'
+                            className="relative py-1 border-b border-zinc-500" 
+                            key={index}
+                        >
+                            <h2 className='flex items-center justify-between'>
+                            {head}
+                            </h2>
+                        </div>
+                        ))}
+                    </div>
+                
+                    <div className="mt-4">
+                        {data.map((item) => (
+                        <div
+                            className="grid grid-cols-2 gap-x-4 capitalize font-medium text-sm px-1 mt-4 md:grid-cols-5 md:gap-x-6 md:text-base"
+                            key={item.id}
+                        >
+                            <p>{item.date}</p>
+                            <p>{item.value}</p>
+                        </div>
+                        ))}
+                    </div>
+                </>
+            ) : (
+                <p className="mt-12 text-gray-500 text-center">
+                    No data found for selected dates.
+                </p>
+            )}
+        </div>
+    )
+}
+
+export default Dashboard
+
+
+
+
+
+
+
+
+
+
+
+
+"use client"
+
+import React, { useState } from 'react'
+import { DateRangePicker } from '../../_components/DateRangePicker'
+import { data } from '@/data';
+import { isWithinInterval, parseISO, startOfDay, endOfDay, isSameDay } from "date-fns";
+
+const Dashboard = () => {
+    // State to store the selected date range
+    const [dateRange, setDateRange] = useState({ from: null, to: null });
+
+    // Function to handle date changes from DateRangePicker
+    const handleDateChange = (from, to) => {
+        setDateRange({ 
+            from: from ? startOfDay(from) : null, 
+            to: to ? endOfDay(to) : null 
+        });
+    };
+
+    const filteredData = data.filter((item) => {
+        if (!dateRange.from) return true; // No filter if no date selected
+        
+        const itemDate = parseISO(item.date); // Convert string date to Date object
+        
+        // If from and to are the same (single date mode), check for exact date match
+        if (dateRange.from && dateRange.to && isSameDay(dateRange.from, dateRange.to)) {
+            return isSameDay(itemDate, dateRange.from);
+        }
+        
+        // Otherwise, check if date is within range
+        return (
+            (!dateRange.from || itemDate >= dateRange.from) &&
+            (!dateRange.to || itemDate <= dateRange.to)
+        );
+    });
+    
+    return (
+        <div className='mt-8'>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <h2 className='text-2xl font-semibold'>
+                    Hourly Report
+                </h2>
+                <DateRangePicker onDateChange={handleDateChange} />
+            </div>
+            {filteredData.length > 0 ? (
+                <div className="grid grid-cols-2 gap-x-4 capitalize font-medium text-sm px-1 mt-12 md:grid-cols-5 md:gap-x-6 md:text-base">
+                    {['date', 'value']?.map((head, index) => (
+                        <div
+                            className="relative py-1 border-b border-zinc-500" key={index}
+                        >
+                            <h2 className='flex items-center justify-between'>
+                                {head}
+                            </h2>
+                        </div>
+                    ))}
+                </div>
+            ) : (null)}
+            
+            <div className="mt-4">
+                {filteredData.length > 0 ? (
+                    filteredData.map((item) => (
+                        <div
+                            className="grid grid-cols-2 gap-x-4 capitalize font-medium text-sm px-1 mt-4 md:grid-cols-5 md:gap-x-6 md:text-base"
+                            key={item?.id}
+                        >
+                            <p>{item?.date}</p>
+                            <p>{item?.value}</p>
+                        </div>
+                    ))
+                ) : (
+                    <p className="mt-4 text-gray-500">
+                        No data found for selected dates.
+                    </p>
+                )}
+            </div>
+        </div>
+    )
+}
+
+export default Dashboard
+
+
+
+
+
+"use client";
+import React, { useState, useMemo } from "react";
+import { DateRangePicker } from "../../_components/DateRangePicker";
+import { data } from "@/data";
+import { isSameDay, parseISO, startOfDay, endOfDay } from "date-fns";
+
+const Dashboard = () => {
+  const [dateRange, setDateRange] = useState({ from: null, to: null });
+  const [sortConfig, setSortConfig] = useState({ key: "date_time", direction: "ascending" });
+
+  const handleDateChange = (from, to) => {
+    setDateRange({
+      from: from ? startOfDay(from) : null,
+      to: to ? endOfDay(to) : null,
+    });
+  };
+
+  const handleSort = (key) => {
+    let direction = "ascending";
+    if (sortConfig.key === key && sortConfig.direction === "ascending") {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const filteredData = data.filter((item) => {
+    if (!dateRange.from) return true;
+    const itemDate = parseISO(item?.production_date);
+    if (dateRange.from && dateRange.to && isSameDay(dateRange.from, dateRange.to)) {
+      return isSameDay(itemDate, dateRange.from);
+    }
+    return (!dateRange.from || itemDate >= dateRange.from) && (!dateRange.to || itemDate <= dateRange.to);
+  });
+
+  const sortedData = [...filteredData].sort((a, b) => {
+    if (sortConfig.key === "date_time") {
+      const dateA = new Date(a.date_time);
+      const dateB = new Date(b.date_time);
+      return sortConfig.direction === "ascending" ? dateA - dateB : dateB - dateA;
+    }
+    return sortConfig.direction === "ascending"
+      ? a[sortConfig.key].localeCompare(b[sortConfig.key])
+      : b[sortConfig.key].localeCompare(a[sortConfig.key]);
+  });
+
+  // Transformation function
+  const transformData = (data) => {
+    const uniqueTags = [...new Set(data.map(item => item.tagNames))];
+    const groupedData = {};
+
+    data.forEach(({ date_time, tagNames, value }) => {
+      if (!groupedData[date_time]) {
+        groupedData[date_time] = { date_time };
+      }
+      groupedData[date_time][tagNames] = value;
+    });
+
+    return { headers: ["Date Time", ...uniqueTags], rows: Object.values(groupedData) };
+  };
+
+  const { headers, rows } = useMemo(() => transformData(sortedData), [sortedData]);
+
+  return (
+    <div className="container mx-auto px-4 pt-4">
+      <div className="w-full mb-[1rem] flex justify-between border-b-[1px] pb-[10px]">
+        <h1 className="text-2xl font-bold">Hourly Report</h1>
+        <DateRangePicker onChange={handleDateChange} />
+      </div>
+
+      {rows.length > 0 ? (
+        <>
+          {/* Grid Headers */}
+          <div className={`grid grid-cols-${headers.length} gap-x-4 capitalize font-medium text-sm px-1 mt-12 md:text-base`}>
+            {headers.map((header, index) => (
+              <div
+                key={index}
+                className="py-2 border-b border-gray-500 cursor-pointer font-bold text-lg"
+                onClick={() => handleSort(header)}
+              >
+                {header}
+                {sortConfig.key === header && (
+                  <span className="ml-1">{sortConfig.direction === "ascending" ? "↑" : "↓"}</span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Grid Data */}
+          <div className="hourly_data mt-2 pb-[15px] h-[30rem] overflow-y-scroll">
+            {rows.map((row, rowIndex) => (
+              <div key={rowIndex} className={`grid grid-cols-${headers.length} gap-x-4 text-sm px-1 mt-4 md:text-base`}>
+                {headers.map((header, colIndex) => (
+                  <p key={colIndex} className="py-2 border-b border-gray-300">
+                    {row[header] || "-"}
+                  </p>
+                ))}
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <p className="mt-4 text-gray-500">No data found for selected dates.</p>
+      )}
+    </div>
+  );
+};
+
+export default Dashboard;

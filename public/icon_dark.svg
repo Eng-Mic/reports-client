@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="154" height="105" viewBox="0 0 154 105">
+  <g id="logo_dark" transform="translate(-0.167 0.333)">
+    <g id="border" transform="translate(0.167 -0.333)">
+      <g id="Rectangle_4" data-name="Rectangle 4" transform="translate(7 7)" fill="none" stroke="#060606" stroke-width="3">
+        <rect width="141" height="92" stroke="none"/>
+        <rect x="1.5" y="1.5" width="138" height="89" fill="none"/>
+      </g>
+      <rect id="Rectangle_5" data-name="Rectangle 5" width="14" height="15" transform="translate(140)" fill="#060606"/>
+      <rect id="Rectangle_6" data-name="Rectangle 6" width="14" height="15" transform="translate(140 90)" fill="#060606"/>
+      <rect id="Rectangle_7" data-name="Rectangle 7" width="13" height="15" transform="translate(0 90)" fill="#060606"/>
+      <rect id="Rectangle_8" data-name="Rectangle 8" width="13" height="15" fill="#060606"/>
+    </g>
+    <text id="Co.." transform="translate(24.167 76.667)" fill="#060606" font-size="70" font-family="BerlinSansFB-Reg, Berlin Sans FB"><tspan x="0" y="0">Co..</tspan></text>
+    <g id="border-2" data-name="border" transform="translate(0.167 -0.333)">
+      <g id="Rectangle_4-2" data-name="Rectangle 4" transform="translate(7 7)" fill="none" stroke="#060606" stroke-width="3">
+        <rect width="141" height="92" stroke="none"/>
+        <rect x="1.5" y="1.5" width="138" height="89" fill="none"/>
+      </g>
+      <rect id="Rectangle_5-2" data-name="Rectangle 5" width="14" height="15" transform="translate(140)" fill="#060606"/>
+      <rect id="Rectangle_6-2" data-name="Rectangle 6" width="14" height="15" transform="translate(140 90)" fill="#060606"/>
+      <rect id="Rectangle_7-2" data-name="Rectangle 7" width="13" height="15" transform="translate(0 90)" fill="#060606"/>
+      <rect id="Rectangle_8-2" data-name="Rectangle 8" width="13" height="15" fill="#060606"/>
+    </g>
+  </g>
+</svg>
