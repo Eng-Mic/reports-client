@@ -97,29 +97,26 @@ import { CustomLegend } from './CustomLegend';
 import { formatValue, getLineColor } from '@/utils/formatter';
 
 export const LineChartComponent = ({ data, midnightIndex, selectedTags }) => {
-  // Only show tick labels at regular intervals to avoid overcrowding
-  // Show every Nth label based on data density
   const getTickLabelDisplay = (index) => {
-    // For less than 100 data points, show every 4th point (20 min intervals)
-    // For 100-200 data points, show every 6th point (30 min intervals)
-    // For more than 200 data points, show every 12th point (hourly)
     const interval = data.length < 100 ? 4 : (data.length < 200 ? 6 : 12);
     return index % interval === 0;
   };
 
-  // Format the x-axis time label
   const formatTimeLabel = (value, index) => {
     const item = data[index];
     if (!item) return '';
-    
-    // For hour marks, show hour with AM/PM
     if (item.minute === 0) {
       return `${item.hour}:00 ${item.daySection}`;
     }
-    
-    // For other points, show hour:minute
     return `${item.hour}:${item.minute.toString().padStart(2, '0')}`;
   };
+
+  // Generate the Y-axis ticks based on desired intervals (e.g., 25, 50, 75, 100)
+  const yMin = Math.floor(Math.min(...data.flatMap(d => selectedTags.map(t => d[t] || 0))) / 50) * 50;
+  const yMax = Math.ceil(Math.max(...data.flatMap(d => selectedTags.map(t => d[t] || 0))) / 50) * 50;
+
+  // Create ticks for 25, 50, 75, 100...
+  const yTicks = Array.from({ length: (yMax - yMin) / 25 + 1 }, (_, i) => yMin + i * 25);
 
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -129,6 +126,29 @@ export const LineChartComponent = ({ data, midnightIndex, selectedTags }) => {
         style={{ backgroundColor: 'white' }}
       >
         <CartesianGrid strokeDasharray="3 3" />
+
+        {/* Bold vertical lines for each hour */}
+        {data.filter(item => item.minute === 0).map((item, idx) => (
+          <ReferenceLine
+            key={`x-hour-line-${idx}`}
+            x={item.timeKey}
+            stroke="#333"
+            strokeWidth={item.hour % 1 === 0 ? 1.5 : 1}
+            strokeDasharray="3 3"
+          />
+        ))}
+
+        {/* Bold horizontal Y-axis lines at 50-unit intervals */}
+        {yTicks.map((value) => (
+          <ReferenceLine
+            key={`y-line-${value}`}
+            y={value}
+            stroke="#333"
+            strokeWidth={2}
+            strokeDasharray="3 3"
+          />
+        ))}
+
         <XAxis 
           dataKey="timeKey" 
           interval={0}
@@ -139,23 +159,14 @@ export const LineChartComponent = ({ data, midnightIndex, selectedTags }) => {
           tick={(props) => {
             const { x, y, payload } = props;
             const index = data.findIndex(d => d.timeKey === payload.value);
-            
-            // Only display certain tick labels to avoid overcrowding
-            if (!getTickLabelDisplay(index)) {
-              return null;
-            }
-            
+            if (!getTickLabelDisplay(index)) return null;
+
             const item = data[index];
             if (!item) return null;
-            
-            // Format time based on whether it's an hour mark or not
-            let timeLabel;
-            if (item.minute === 0) {
-              timeLabel = `${item.hour}:00 ${item.daySection}`;
-            } else {
-              timeLabel = `${item.hour}:${item.minute.toString().padStart(2, '0')}`;
-            }
-            
+            const timeLabel = item.minute === 0
+              ? `${item.hour}:00 ${item.daySection}`
+              : `${item.hour}:${item.minute.toString().padStart(2, '0')}`;
+
             return (
               <g transform={`translate(${x},${y})`}>
                 <text 
@@ -174,11 +185,12 @@ export const LineChartComponent = ({ data, midnightIndex, selectedTags }) => {
             );
           }}
         />
+
         <YAxis 
           tickFormatter={formatValue}
           domain={['auto', 'auto']}
           width={70}
-          tick={({ x, y, payload }) => (
+          tick={({ x, y, payload, index }) => (
             <g transform={`translate(${x},${y})`}>
               <text
                 x={0}
@@ -186,13 +198,15 @@ export const LineChartComponent = ({ data, midnightIndex, selectedTags }) => {
                 dy={10}
                 textAnchor="end"
                 fill="#666"
-                fontWeight="bold"  // Add this to make it bold
+                fontWeight= "bold" // Example: skip bold for last value
               >
                 {formatValue(payload.value)}
               </text>
             </g>
           )}
         />
+
+
         <Tooltip 
           formatter={(value, name) => [formatValue(value), name.split('.').pop()]}
           labelFormatter={(label, payload) => {
@@ -202,33 +216,34 @@ export const LineChartComponent = ({ data, midnightIndex, selectedTags }) => {
           }}
           contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc' }}
         />
+
         <Legend content={CustomLegend} />
-        
-        {/* Add reference line at midnight */}
+
+        {/* Reference line for midnight */}
         {midnightIndex > 0 && (
-            <ReferenceLine
-                x={data[midnightIndex].timeKey}
-                stroke="#666"
-                strokeDasharray="5 5"
-                label={{
-                    value: 'Day Change',
-                    position: 'top',
-                    fill: '#666',
-                    dy: -10,
-                }}
-            />
+          <ReferenceLine
+            x={data[midnightIndex].timeKey}
+            stroke="#666"
+            strokeDasharray="5 5"
+            label={{
+              value: 'Day Change',
+              position: 'top',
+              fill: '#666',
+              dy: -10,
+            }}
+          />
         )}
-        
+
         {selectedTags.map((tag, index) => (
           <Line
             key={tag}
             type="monotone"
             dataKey={tag}
-            name={tag.split('.').pop()}
+            name={tag}
             stroke={getLineColor(index)}
             strokeWidth={2.5}
             activeDot={{ r: 6 }}
-            dot={false} // Hide dots for 5-minute data to reduce visual clutter
+            dot={false}
             connectNulls
           />
         ))}

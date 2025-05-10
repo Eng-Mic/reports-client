@@ -67,6 +67,7 @@ const BarChartExpenseClass = ({ tasks }) => {
     if (percentage >= 50) return "#f59e0b"; // Amber for medium completion
     return "#ef4444"; // Red for low completion
   };
+  // console.log("expenseClassData", expenseClassData);
 
   return (
     <div className="w-full py-[10x]">
@@ -83,6 +84,7 @@ const BarChartExpenseClass = ({ tasks }) => {
             layout="vertical"
             barSize={20}
             margin={{ top: 10, bottom: 10, left: 0, right: 60 }}
+            barGap={10}
           >
             <XAxis type="number" domain={[0, 100]} tickFormatter={(val) => `${val}%`} />
             <YAxis
@@ -90,21 +92,22 @@ const BarChartExpenseClass = ({ tasks }) => {
               dataKey="name"
               width={100}
               tickFormatter={label => label.length > 14 ? label.slice(0, 14) + "…" : label}
+              interval={0}
             />
             <Tooltip content={<CustomTooltip />} />
             {/* <Legend /> */}
-            
+
             {/* Only showing the completed percentage as a single bar */}
             <Bar dataKey="completed" name="Completed %" radius={[0, 4, 4, 0]}>
               {/* Color cells based on completion percentage */}
               {expenseClassData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={getCompletionColor(entry.completed)} />
               ))}
-              <LabelList 
-                dataKey="completed" 
-                position="right" 
-                formatter={(val) => `${val}%`} 
-                style={{ fontWeight: 600 }} 
+              <LabelList
+                dataKey="completed"
+                position="right"
+                formatter={(val) => `${val}%`}
+                style={{ fontWeight: 600 }}
               />
             </Bar>
           </BarChart>

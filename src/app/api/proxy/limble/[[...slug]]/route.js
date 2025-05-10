@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 // Adjust base URL as needed
-const BACKEND_BASE_URL = "http://localhost:5001/api/limble";
+const BACKEND_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/limble`;
 
 export async function GET(request) {
   try {

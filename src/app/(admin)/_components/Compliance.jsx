@@ -47,7 +47,7 @@ const Compliance = ({ tasks, isLoading, dateRange, onComplianceChange }) => {
     
 
     // console.log("dateRange", dateRange);
-    // console.log("tasks", tasks);
+    // console.log("tasks --", tasks);
     
     
     
@@ -77,7 +77,7 @@ const Compliance = ({ tasks, isLoading, dateRange, onComplianceChange }) => {
         return filtered;
     }, [tasks, dateRange, selectedCompliance]);
 
-    console.log("Filtered Tasks Compliance:", filteredTasks);
+    // console.log("Filtered Tasks Compliance:", filteredTasks);
     
 
     useEffect(() => {
@@ -118,6 +118,9 @@ const Compliance = ({ tasks, isLoading, dateRange, onComplianceChange }) => {
 
     const getCountByStatus = (status) =>
         filteredTasks?.filter((task) => task.status?.includes(status)).length || 0;
+
+    // console.log("getCountByStatus", getCountByStatus("Completed"));
+    
 
     return (
         <div className='bg-[#f8f8f8] rounded-md border overflow-hidden relative'>
@@ -328,9 +331,9 @@ const Compliance = ({ tasks, isLoading, dateRange, onComplianceChange }) => {
                                         </div>
 
                                         {/* Stats */}
-                                        {totalWO > 0 && (
+                                        {totalWO > 0 ? (
                                             <>
-                                                <div className="grid grid-cols-2 rounded-lg px-[10px] my-[1rem] overflow-hidden ">
+                                                <div className="w-full grid grid-cols-2 rounded-lg px-[10px] my-[1rem] ">
                                                     {/* Top Left */}
                                                     <div className="p-4 border-b border-r border-zinc-300">
                                                         <p className="text-[1.1rem] font-bold text-foreground">
@@ -414,7 +417,7 @@ const Compliance = ({ tasks, isLoading, dateRange, onComplianceChange }) => {
                                                     <BarChartExpenseClass tasks={filteredTasks} />
                                                 </div>
                                             </>
-                                        )}
+                                        ) : null}
                                         
                                         
                                         <div className="flex flex-col justify-center items-center gap-y-[10px] pb-[10px]">

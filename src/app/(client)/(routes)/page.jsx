@@ -3,6 +3,8 @@
 import { cn } from '@/lib/utils';
 import { usePathname, useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
+import Auth from '../_components/Auth';
+import useAuthStore from '@/store/authStore';
 
 const reports = [
   {
@@ -33,6 +35,8 @@ const Home = () => {
   const [pageLoading, setPageLoading] = useState(true);
   const [navLoading, setNavLoading] = useState(false);
 
+  const { isAuthenticated, user } = useAuthStore()
+
   const handleReportClick = (report) => {
     if (selectedReport === report.id) {
       setSelectedReport(null);
@@ -54,12 +58,8 @@ const Home = () => {
 
   useEffect(() => {
     const currentRoute = reports.find((route) => route.slug === pathname);
-    if (currentRoute) {
-      setSelectedReport(currentRoute.id);
-    } else {
-      setSelectedReport(null);
-    }
-    setNavLoading(false); // Stop navigation loader after route change
+    setSelectedReport(currentRoute?.id ?? null);
+    setNavLoading(false);
   }, [pathname]);
 
   if (pageLoading) {
@@ -69,6 +69,15 @@ const Home = () => {
   return (
     <div className='w-full h-full mx-auto flex flex-col  relative lg:w-[70%] lg:justify-center'>
       {navLoading && <Loader />}
+
+      {!isAuthenticated && !user ? (
+          <div
+              // onClick={() => {
+              //   setIsAuth(!isAuth);
+              // }}
+              className = "fixed inset-0 bg-black opacity-40 z-30"
+          />
+      ) : null}
       
       <div className="w-full flex flex-col items-center justify-between gap-[3rem] lg:flex-row">
 
@@ -120,6 +129,12 @@ const Home = () => {
         </div>
 
       </div>
+
+      {!isAuthenticated && !user ? (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <Auth />
+        </div>
+      ) : null}
     </div>
   );
 };

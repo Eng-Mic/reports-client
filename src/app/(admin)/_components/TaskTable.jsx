@@ -75,7 +75,7 @@ const TaskTable = ({ tasks, isLoading, dateRange, complianceFilter }) => {
                 </div>
             </div>
         ) : (
-            <div>{!isLoading && "No data available."}</div>
+            <div className='w-full flex justify-center items-center my-[10px]'>{!isLoading && "No data available."}</div>
         )}
     </div>
   )

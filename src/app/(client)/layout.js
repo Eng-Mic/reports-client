@@ -1,5 +1,6 @@
 "use client"
 
+import { Toaster } from "react-hot-toast"
 import Navigation from "./_components/Navigation"
 
 

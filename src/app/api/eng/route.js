@@ -7,7 +7,7 @@ export async function GET(request) {
     console.log("Received parameters:", Object.fromEntries(searchParams.entries()));
     
     // Forward the request to your backend server with the correct path
-    const backendURL = `http://localhost:5001/api/records/eng/?${searchParams.toString()}`;
+    const backendURL = `${process.env.NEXT_PUBLIC_API_URL}/api/records/eng/?${searchParams.toString()}`;
     console.log("Forwarding request to:", backendURL);
     
     const response = await fetch(backendURL, {
